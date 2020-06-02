@@ -77,13 +77,13 @@ func TestNewClientFromEnv_EnvSet(t *testing.T) {
 	if err != nil {
 		t.Fatal()
 	}
-	if client.Token.String() != expectedToken {
-		t.Fatalf("expected token to be `%s` but got `%s`", expectedToken, client.Token)
+	if client.Token().String() != expectedToken {
+		t.Fatalf("expected token to be `%s` but got `%s`", expectedToken, client.Token())
 	}
 }
 
 func TestNewRequest_WithFullURL(t *testing.T) {
-	client := NewClient("123")
+	client := NewClient("123").(*client)
 	req, err := client.newRequest("GET", "https://example.com", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -98,7 +98,7 @@ func TestNewRequest_WithFullURL(t *testing.T) {
 
 func TestNewRequest_WithPathUri(t *testing.T) {
 	expectedURL := "https://api.onfido.com/v2/applicants"
-	client := NewClient("123")
+	client := NewClient("123").(*client)
 	uris := []string{"/applicants", "applicants"}
 
 	for _, uri := range uris {
@@ -117,7 +117,7 @@ func TestNewRequest_WithPathUri(t *testing.T) {
 
 func TestNewRequest_TokenSet(t *testing.T) {
 	expectedToken := "io2h54k2j3h52jk"
-	client := NewClient(expectedToken)
+	client := NewClient(expectedToken).(*client)
 	req, err := client.newRequest("get", "/foo", nil)
 	if err != nil {
 		t.Fatal()
@@ -132,8 +132,8 @@ func TestNewRequest_TokenSet(t *testing.T) {
 func TestDo_RequestErrors(t *testing.T) {
 	expected := errors.New("TestJson_RequestErrors")
 
-	client := NewClient("123")
-	client.HTTPClient = &stubbedHTTPClient{err: expected}
+	client := NewClient("123").(*client)
+	client.SetHTTPClient(&stubbedHTTPClient{err: expected})
 
 	_, err := client.do(context.Background(), &http.Request{}, nil)
 	if err == nil {
@@ -145,8 +145,8 @@ func TestDo_RequestErrors(t *testing.T) {
 }
 
 func TestDo_InvalidStatusCode(t *testing.T) {
-	client := NewClient("123")
-	client.HTTPClient = &stubbedHTTPClient{resp: &http.Response{StatusCode: http.StatusForbidden}}
+	client := NewClient("123").(*client)
+	client.SetHTTPClient(&stubbedHTTPClient{resp: &http.Response{StatusCode: http.StatusForbidden}})
 
 	_, err := client.do(context.Background(), &http.Request{}, nil)
 	if err == nil {
@@ -169,8 +169,8 @@ func TestDo_InvalidStatusCode_InvalidJsonParsed(t *testing.T) {
 	resp.Header.Add("Content-Type", "application/json")
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer([]byte("hello")))
 
-	client := NewClient("123")
-	client.HTTPClient = &stubbedHTTPClient{resp: resp}
+	client := NewClient("123").(*client)
+	client.SetHTTPClient(&stubbedHTTPClient{resp: resp})
 
 	_, err := client.do(context.Background(), &http.Request{}, &Applicant{})
 	if err == nil {
@@ -210,8 +210,8 @@ func TestDo_InvalidStatusCode_JsonParsed(t *testing.T) {
 	resp.Header.Add("Content-Type", "application/json")
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer(encodedErr))
 
-	client := NewClient("123")
-	client.HTTPClient = &stubbedHTTPClient{resp: resp}
+	client := NewClient("123").(*client)
+	client.SetHTTPClient(&stubbedHTTPClient{resp: resp})
 
 	_, err = client.do(context.Background(), &http.Request{}, &Applicant{})
 	if err == nil {
@@ -234,8 +234,8 @@ func TestDo_InvalidJsonResponse(t *testing.T) {
 	resp := &http.Response{StatusCode: http.StatusOK}
 	resp.Body = ioutil.NopCloser(bytes.NewBuffer([]byte("hello")))
 
-	client := NewClient("123")
-	client.HTTPClient = &stubbedHTTPClient{resp: resp}
+	client := NewClient("123").(*client)
+	client.SetHTTPClient(&stubbedHTTPClient{resp: resp})
 
 	_, err := client.do(context.Background(), &http.Request{}, &Applicant{})
 	if err == nil {

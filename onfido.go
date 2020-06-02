@@ -21,12 +21,46 @@ const (
 	TokenEnv        = "ONFIDO_TOKEN"
 )
 
-// Client represents an Onfido API client
-type Client struct {
-	Endpoint   string
-	HTTPClient HTTPRequester
-	Token      Token
+type OnfidoClient interface {
+	SetHTTPClient(client HTTPRequester)
+	NewSdkToken(ctx context.Context, id, referrer string) (*SdkToken, error)
+	GetReport(ctx context.Context, checkID, id string) (*Report, error)
+	ResumeReport(ctx context.Context, checkID, id string) error
+	CancelReport(ctx context.Context, checkID, id string) error
+	ListReports(checkID string) *ReportIter
+	GetDocument(ctx context.Context, applicantID, id string) (*Document, error)
+	ListDocuments(applicantID string) *DocumentIter
+	UploadDocument(ctx context.Context, applicantID string, dr DocumentRequest) (*Document, error)
+	ListLivePhotos(applicantID string) *LivePhotoIter
+	CreateApplicant(ctx context.Context, a Applicant) (*Applicant, error)
+	DeleteApplicant(ctx context.Context, id string) error
+	GetApplicant(ctx context.Context, id string) (*Applicant, error)
+	ListApplicants() *ApplicantIter
+	UpdateApplicant(ctx context.Context, a Applicant) (*Applicant, error)
+	CreateCheck(ctx context.Context, applicantID string, cr CheckRequest) (*Check, error)
+	GetCheck(ctx context.Context, applicantID, id string) (*CheckRetrieved, error)
+	GetCheckExpanded(ctx context.Context, applicantID, id string) (*Check, error)
+	ResumeCheck(ctx context.Context, id string) (*Check, error)
+	ListChecks(applicantID string) *CheckIter
+	CreateWebhook(ctx context.Context, wr WebhookRefRequest) (*WebhookRef, error)
+	ListWebhooks() *WebhookRefIter
+	PickAddresses(postcode string) *PickerIter
+	GetResource(ctx context.Context, href string, v interface{}) error
+	Token() Token
 }
+
+// Client represents an Onfido API client
+type client struct {
+	endpoint   string
+	httpClient HTTPRequester
+	token      Token
+}
+
+func (c *client) SetHTTPClient(client HTTPRequester) {
+	c.httpClient = client
+}
+
+var _ OnfidoClient = &client{}
 
 // HTTPRequester represents an HTTP requester
 type HTTPRequester interface {
@@ -72,9 +106,11 @@ func (t Token) Prod() bool {
 		!strings.HasPrefix(string(t), "api_sandbox.")
 }
 
+func (c *client) Token() Token { return c.token }
+
 // NewClientFromEnv creates a new Onfido client using configuration
 // from environment variables.
-func NewClientFromEnv() (*Client, error) {
+func NewClientFromEnv() (OnfidoClient, error) {
 	token := os.Getenv(TokenEnv)
 	if token == "" {
 		return nil, fmt.Errorf("onfido token not found in environmental variable `%s`", TokenEnv)
@@ -83,20 +119,20 @@ func NewClientFromEnv() (*Client, error) {
 }
 
 // NewClient creates a new Onfido client.
-func NewClient(token string) *Client {
-	return &Client{
-		Endpoint:   DefaultEndpoint,
-		HTTPClient: http.DefaultClient,
-		Token:      Token(token),
+func NewClient(token string) OnfidoClient {
+	return &client{
+		endpoint:   DefaultEndpoint,
+		httpClient: http.DefaultClient,
+		token:      Token(token),
 	}
 }
 
-func (c *Client) newRequest(method, uri string, body io.Reader) (*http.Request, error) {
+func (c *client) newRequest(method, uri string, body io.Reader) (*http.Request, error) {
 	if !strings.HasPrefix(uri, "http") {
 		if !strings.HasPrefix(uri, "/") {
 			uri = "/" + uri
 		}
-		uri = c.Endpoint + uri
+		uri = c.endpoint + uri
 	}
 
 	req, err := http.NewRequest(method, uri, body)
@@ -106,7 +142,7 @@ func (c *Client) newRequest(method, uri string, body io.Reader) (*http.Request, 
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Go-Onfido/"+ClientVersion)
-	req.Header.Set("Authorization", "Token token="+c.Token.String())
+	req.Header.Set("Authorization", "Token token="+c.token.String())
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -114,9 +150,9 @@ func (c *Client) newRequest(method, uri string, body io.Reader) (*http.Request, 
 	return req, nil
 }
 
-func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+func (c *client) do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
 	req = req.WithContext(ctx)
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		select {
 		case <-ctx.Done():
@@ -165,7 +201,7 @@ func handleResponseErr(resp *http.Response) error {
 }
 
 type iter struct {
-	c       *Client
+	c       *client
 	nextURL string
 	handler iterHandler
 

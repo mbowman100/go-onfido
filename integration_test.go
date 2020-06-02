@@ -10,7 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	onfido "github.com/uw-labs/go-onfido"
+
+	"github.com/esqimo/go-onfido"
 )
 
 var (
@@ -217,7 +218,7 @@ func getDefaultDocument() *onfido.DocumentRequest {
 	}
 }
 
-func getOnfidoClient() *onfido.Client {
+func getOnfidoClient() onfido.Client {
 	if *onfidoToken == "" {
 		panic("onfido token not set")
 	}
