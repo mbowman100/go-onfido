@@ -43,6 +43,7 @@ type OnfidoClient interface {
 	ResumeCheck(ctx context.Context, id string) (*Check, error)
 	ListChecks(applicantID string) *CheckIter
 	CreateWebhook(ctx context.Context, wr WebhookRefRequest) (*WebhookRef, error)
+	UpdateWebhook(ctx context.Context, id string, wr WebhookRefRequest) (*WebhookRef, error)
 	ListWebhooks() *WebhookRefIter
 	PickAddresses(postcode string) *PickerIter
 	GetResource(ctx context.Context, href string, v interface{}) error
