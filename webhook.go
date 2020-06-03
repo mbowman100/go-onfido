@@ -11,6 +11,13 @@ import (
 	"os"
 )
 
+type Webhook interface {
+	ValidateSignature(body []byte, signature string) error
+	ParseFromRequest(req *http.Request) (*WebhookRequest, error)
+}
+
+var _ Webhook = &webhook{}
+
 // Constants
 const (
 	WebhookSignatureHeader = "X-Signature"
@@ -24,7 +31,7 @@ var (
 )
 
 // Webhook represents a webhook handler
-type Webhook struct {
+type webhook struct {
 	Token                   string
 	SkipSignatureValidation bool
 }
@@ -45,7 +52,7 @@ type WebhookRequest struct {
 
 // NewWebhookFromEnv creates a new webhook handler using
 // configuration from environment variables.
-func NewWebhookFromEnv() (*Webhook, error) {
+func NewWebhookFromEnv() (Webhook, error) {
 	token := os.Getenv(WebhookTokenEnv)
 	if token == "" {
 		return nil, ErrMissingWebhookToken
@@ -54,14 +61,14 @@ func NewWebhookFromEnv() (*Webhook, error) {
 }
 
 // NewWebhook creates a new webhook handler
-func NewWebhook(token string) *Webhook {
-	return &Webhook{
+func NewWebhook(token string) Webhook {
+	return &webhook{
 		Token: token,
 	}
 }
 
 // ValidateSignature validates the request body against the signature header.
-func (wh *Webhook) ValidateSignature(body []byte, signature string) error {
+func (wh *webhook) ValidateSignature(body []byte, signature string) error {
 	mac := hmac.New(sha1.New, []byte(wh.Token))
 	if _, err := mac.Write(body); err != nil {
 		return err
@@ -77,7 +84,7 @@ func (wh *Webhook) ValidateSignature(body []byte, signature string) error {
 
 // ParseFromRequest parses the webhook request body and returns
 // it as WebhookRequest if the request signature is valid.
-func (wh *Webhook) ParseFromRequest(req *http.Request) (*WebhookRequest, error) {
+func (wh *webhook) ParseFromRequest(req *http.Request) (*WebhookRequest, error) {
 	signature := req.Header.Get(WebhookSignatureHeader)
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
