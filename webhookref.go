@@ -92,6 +92,16 @@ func (c *client) UpdateWebhook(ctx context.Context, id string, wr WebhookRefRequ
 	return &resp, err
 }
 
+func (c *client) DeleteWebhook(ctx context.Context, id string) error {
+	req, err := c.newRequest(http.MethodDelete, "/webhooks/"+id, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.do(ctx, req, nil)
+	return err
+}
+
 // WebhookRefIter represents a webhook iterator
 type WebhookRefIter struct {
 	*iter
