@@ -20,7 +20,7 @@ var _ Webhook = &webhook{}
 
 // Constants
 const (
-	WebhookSignatureHeader = "X-Signature"
+	WebhookSignatureHeader = "X-Sha2-Signature"
 	WebhookTokenEnv        = "ONFIDO_WEBHOOK_TOKEN"
 )
 
