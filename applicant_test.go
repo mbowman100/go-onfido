@@ -1,4 +1,4 @@
-package onfido_test
+package onfido
 
 import (
 	"context"
@@ -20,10 +20,10 @@ func TestCreateApplicant_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	_, err := client.CreateApplicant(context.Background(), onfido.Applicant{})
+	_, err := client.CreateApplicant(context.Background(), Applicant{})
 	if err == nil {
 		t.Fatal()
 	}
@@ -51,10 +51,10 @@ func TestCreateApplicant_ApplicantCreated(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	a, err := client.CreateApplicant(context.Background(), onfido.Applicant{
+	a, err := client.CreateApplicant(context.Background(), Applicant{
 		Title:     expected.Title,
 		FirstName: expected.FirstName,
 		LastName:  expected.LastName,
@@ -83,8 +83,8 @@ func TestDeleteApplicant_NonOKResponse(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	err := client.DeleteApplicant(context.Background(), expected)
 	if err == nil {
@@ -106,8 +106,8 @@ func TestDeleteApplicant_ValidRequest(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	err := client.DeleteApplicant(context.Background(), expected)
 	if err != nil {
@@ -123,8 +123,8 @@ func TestGetApplicant_NonOKResponse(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	_, err := client.GetApplicant(context.Background(), "12432")
 	if err == nil {
@@ -158,8 +158,8 @@ func TestGetApplicant_ValidRequest(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	a, err := client.GetApplicant(context.Background(), expected.ID)
 	if err != nil {
@@ -180,8 +180,8 @@ func TestListApplicants_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	it := client.ListApplicants()
 	if it.Next(context.Background()) == true {
@@ -214,8 +214,8 @@ func TestListApplicants_ApplicantsRetrieved(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	it := client.ListApplicants()
 	for it.Next(context.Background()) {
@@ -239,10 +239,10 @@ func TestUpdateApplicant_IDNotSet(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	_, err := client.UpdateApplicant(context.Background(), onfido.Applicant{})
+	_, err := client.UpdateApplicant(context.Background(), Applicant{})
 	if err == nil {
 		t.Fatal(err)
 	}
@@ -256,17 +256,17 @@ func TestUpdateApplicant_NonOKResponse(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	_, err := client.UpdateApplicant(context.Background(), onfido.Applicant{ID: "3534"})
+	_, err := client.UpdateApplicant(context.Background(), Applicant{ID: "3534"})
 	if err == nil {
 		t.Fatal(err)
 	}
 }
 
 func TestUpdateApplicant_ValidRequest(t *testing.T) {
-	expected := onfido.Applicant{
+	expected := Applicant{
 		ID:        "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Title:     "Mr",
 		FirstName: "Foo",
@@ -291,8 +291,8 @@ func TestUpdateApplicant_ValidRequest(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	a, err := client.UpdateApplicant(context.Background(), expected)
 	if err != nil {

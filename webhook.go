@@ -85,18 +85,19 @@ func (wh *webhook) ValidateSignature(body []byte, signature string) error {
 // ParseFromRequest parses the webhook request body and returns
 // it as WebhookRequest if the request signature is valid.
 func (wh *webhook) ParseFromRequest(req *http.Request) (*WebhookRequest, error) {
-	signature := req.Header.Get(WebhookSignatureHeader)
-	if signature == "" {
-		return nil, errors.New("invalid request, missing signature")
-	}
-
 	body, err := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
+
 	if err != nil {
 		return nil, err
 	}
-	defer req.Body.Close()
 
 	if !wh.SkipSignatureValidation {
+		signature := req.Header.Get(WebhookSignatureHeader)
+		if signature == "" {
+			return nil, errors.New("invalid request, missing signature")
+		}
+
 		if err := wh.ValidateSignature(body, signature); err != nil {
 			return nil, err
 		}
