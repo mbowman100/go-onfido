@@ -1,4 +1,4 @@
-package onfido_test
+package onfido
 
 import (
 	"context"
@@ -7,13 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/gorilla/mux"
-	onfido "github.com/uw-labs/go-onfido"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestNewSdkToken_NonOKResponse(t *testing.T) {
+func TestNewSdkTokenWeb_NonOKResponse(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		_, wErr := w.Write([]byte("{\"error\": \"things went bad\"}"))
@@ -21,10 +19,10 @@ func TestNewSdkToken_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	token, err := client.NewSdkToken(context.Background(), "123", "https://*.onfido.com/documentation/*")
+	token, err := client.NewSdkTokenWeb(context.Background(), "123", "https://*.onfido.com/documentation/*")
 	if err == nil {
 		t.Fatal("expected to see an error")
 	}
@@ -33,8 +31,8 @@ func TestNewSdkToken_NonOKResponse(t *testing.T) {
 	}
 }
 
-func TestNewSdkToken_ApplicantsRetrieved(t *testing.T) {
-	expected := onfido.SdkToken{
+func TestNewSdkTokenWeb_ApplicantsRetrieved(t *testing.T) {
+	expected := SdkToken{
 		ApplicantID: "klj25h2jk5j4k5jk35",
 		Referrer:    "https://*.uw-labs.co.uk/documentation/*",
 		Token:       "423423m4n234czxKJKDLF",
@@ -46,7 +44,7 @@ func TestNewSdkToken_ApplicantsRetrieved(t *testing.T) {
 
 	m := mux.NewRouter()
 	m.HandleFunc("/sdk_token", func(w http.ResponseWriter, r *http.Request) {
-		var tk onfido.SdkToken
+		var tk SdkToken
 		assert.NoError(t, json.NewDecoder(r.Body).Decode(&tk))
 		assert.Equal(t, expected.ApplicantID, tk.ApplicantID)
 		assert.Equal(t, expected.Referrer, tk.Referrer)
@@ -59,10 +57,10 @@ func TestNewSdkToken_ApplicantsRetrieved(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	token, err := client.NewSdkToken(context.Background(), expected.ApplicantID, expected.Referrer)
+	token, err := client.NewSdkTokenWeb(context.Background(), expected.ApplicantID, expected.Referrer)
 	if err != nil {
 		t.Fatal(err)
 	}

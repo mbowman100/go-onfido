@@ -1,4 +1,4 @@
-package onfido_test
+package onfido
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	onfido "github.com/uw-labs/go-onfido"
 )
 
 func TestCreateCheck_NonOKResponse(t *testing.T) {
@@ -20,10 +19,10 @@ func TestCreateCheck_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	_, err := client.CreateCheck(context.Background(), "", onfido.CheckRequest{})
+	_, err := client.CreateCheck(context.Background(), "", CheckRequest{})
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
@@ -31,21 +30,21 @@ func TestCreateCheck_NonOKResponse(t *testing.T) {
 
 func TestCreateCheck_CheckCreated(t *testing.T) {
 	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
-	expected := onfido.Check{
+	expected := Check{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        onfido.CheckTypeExpress,
+		Type:        CheckTypeExpress,
 		Status:      "complete",
-		Result:      onfido.CheckResultClear,
-		DownloadURI: "https://onfido.com/dashboard/pdf/1234",
-		FormURI:     "https://onfido.com/information/1234",
+		Result:      CheckResultClear,
+		DownloadURI: "https://com/dashboard/pdf/1234",
+		FormURI:     "https://com/information/1234",
 		RedirectURI: "https://somewhere.else",
-		ResultsURI:  "https://onfido.com/dashboard/information_requests/1234",
-		Reports: []*onfido.Report{
+		ResultsURI:  "https://com/dashboard/information_requests/1234",
+		Reports: []*Report{
 			{
 				ID:     "7410a943-8f00-43d8-98de-36a774196d86",
-				Name:   onfido.ReportNameDocument,
-				Result: onfido.ReportResultClear,
+				Name:   ReportNameDocument,
+				Result: ReportResultClear,
 			},
 		},
 		Tags: []string{"my-tag"},
@@ -69,10 +68,10 @@ func TestCreateCheck_CheckCreated(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	c, err := client.CreateCheck(context.Background(), applicantID, onfido.CheckRequest{
+	c, err := client.CreateCheck(context.Background(), applicantID, CheckRequest{
 		Type:              expected.Type,
 		RedirectURI:       expected.RedirectURI,
 		Reports:           expected.Reports,
@@ -102,8 +101,8 @@ func TestGetCheck_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	_, err := client.GetCheck(context.Background(), "", "")
 	if err == nil {
@@ -113,16 +112,16 @@ func TestGetCheck_NonOKResponse(t *testing.T) {
 
 func TestGetCheck_CheckRetrieved(t *testing.T) {
 	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
-	expected := onfido.CheckRetrieved{
+	expected := CheckRetrieved{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        onfido.CheckTypeExpress,
+		Type:        CheckTypeExpress,
 		Status:      "complete",
-		Result:      onfido.CheckResultClear,
-		DownloadURI: "https://onfido.com/dashboard/pdf/1234",
-		FormURI:     "https://onfido.com/information/1234",
+		Result:      CheckResultClear,
+		DownloadURI: "https://com/dashboard/pdf/1234",
+		FormURI:     "https://com/information/1234",
 		RedirectURI: "https://somewhere.else",
-		ResultsURI:  "https://onfido.com/dashboard/information_requests/1234",
+		ResultsURI:  "https://com/dashboard/information_requests/1234",
 		Reports:     []string{"7410a943-8f00-43d8-98de-36a774196d86"},
 		Tags:        []string{"my-tag"},
 	}
@@ -145,8 +144,8 @@ func TestGetCheck_CheckRetrieved(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	c, err := client.GetCheck(context.Background(), applicantID, expected.ID)
 	if err != nil {
@@ -167,16 +166,16 @@ func TestGetCheck_CheckRetrieved(t *testing.T) {
 
 func TestGetCheckExpanded_NoReports(t *testing.T) {
 	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
-	expected := onfido.CheckRetrieved{
+	expected := CheckRetrieved{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        onfido.CheckTypeExpress,
+		Type:        CheckTypeExpress,
 		Status:      "complete",
-		Result:      onfido.CheckResultClear,
-		DownloadURI: "https://onfido.com/dashboard/pdf/1234",
-		FormURI:     "https://onfido.com/information/1234",
+		Result:      CheckResultClear,
+		DownloadURI: "https://com/dashboard/pdf/1234",
+		FormURI:     "https://com/information/1234",
 		RedirectURI: "https://somewhere.else",
-		ResultsURI:  "https://onfido.com/dashboard/information_requests/1234",
+		ResultsURI:  "https://com/dashboard/information_requests/1234",
 		Reports:     []string{},
 		Tags:        []string{"my-tag"},
 	}
@@ -199,8 +198,8 @@ func TestGetCheckExpanded_NoReports(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	c, err := client.GetCheckExpanded(context.Background(), applicantID, expected.ID)
 	if err != nil {
@@ -227,8 +226,8 @@ func TestGetCheckExpanded_NonOkResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	_, err := client.GetCheckExpanded(context.Background(), "", "")
 	if err == nil {
@@ -242,16 +241,16 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 	report1ID := "1fd6fec0-456f-443a-b75d-b048f47c34f7"
 	report2ID := "6ec6c029-469e-4c9e-91f3-beeb3fbc175e"
 
-	expected := onfido.CheckRetrieved{
+	expected := CheckRetrieved{
 		ID:          checkID,
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        onfido.CheckTypeExpress,
+		Type:        CheckTypeExpress,
 		Status:      "complete",
-		Result:      onfido.CheckResultClear,
-		DownloadURI: "https://onfido.com/dashboard/pdf/1234",
-		FormURI:     "https://onfido.com/information/1234",
+		Result:      CheckResultClear,
+		DownloadURI: "https://com/dashboard/pdf/1234",
+		FormURI:     "https://com/information/1234",
 		RedirectURI: "https://somewhere.else",
-		ResultsURI:  "https://onfido.com/dashboard/information_requests/1234",
+		ResultsURI:  "https://com/dashboard/information_requests/1234",
 		Reports:     []string{report1ID, report2ID},
 		Tags:        []string{"my-tag"},
 	}
@@ -261,13 +260,13 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 	}
 
 	// Expected Report 1
-	expectedReport1 := onfido.Report{
+	expectedReport1 := Report{
 		ID:        report1ID,
-		Name:      onfido.ReportNameDocument,
+		Name:      ReportNameDocument,
 		Status:    "complete",
-		Result:    onfido.ReportResultClear,
-		SubResult: onfido.ReportSubResultClear,
-		Variant:   onfido.ReportVariantStandard,
+		Result:    ReportResultClear,
+		SubResult: ReportSubResultClear,
+		Variant:   ReportVariantStandard,
 		Href:      "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
 	}
 	expectedReport1Json, err := json.Marshal(expectedReport1)
@@ -276,13 +275,13 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 	}
 
 	// Expected Report 2
-	expectedReport2 := onfido.Report{
+	expectedReport2 := Report{
 		ID:        report2ID,
-		Name:      onfido.ReportNameDocument,
+		Name:      ReportNameDocument,
 		Status:    "complete",
-		Result:    onfido.ReportResultClear,
-		SubResult: onfido.ReportSubResultClear,
-		Variant:   onfido.ReportVariantStandard,
+		Result:    ReportResultClear,
+		SubResult: ReportSubResultClear,
+		Variant:   ReportVariantStandard,
 		Href:      "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
 	}
 	expectedReport2Json, err := json.Marshal(expectedReport2)
@@ -324,8 +323,8 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	c, err := client.GetCheckExpanded(context.Background(), applicantID, expected.ID)
 	if err != nil {
@@ -342,7 +341,7 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 	assert.Equal(t, expected.RedirectURI, c.RedirectURI)
 	assert.Equal(t, expected.ResultsURI, c.ResultsURI)
 	assert.Len(t, c.Reports, 2)
-	assert.ElementsMatch(t, c.Reports, []*onfido.Report{&expectedReport1, &expectedReport2})
+	assert.ElementsMatch(t, c.Reports, []*Report{&expectedReport1, &expectedReport2})
 }
 
 func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
@@ -351,16 +350,16 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 	report1ID := "1fd6fec0-456f-443a-b75d-b048f47c34f7"
 	report2ID := "returns-error-status"
 
-	expected := onfido.CheckRetrieved{
+	expected := CheckRetrieved{
 		ID:          checkID,
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        onfido.CheckTypeExpress,
+		Type:        CheckTypeExpress,
 		Status:      "complete",
-		Result:      onfido.CheckResultClear,
-		DownloadURI: "https://onfido.com/dashboard/pdf/1234",
-		FormURI:     "https://onfido.com/information/1234",
+		Result:      CheckResultClear,
+		DownloadURI: "https://com/dashboard/pdf/1234",
+		FormURI:     "https://com/information/1234",
 		RedirectURI: "https://somewhere.else",
-		ResultsURI:  "https://onfido.com/dashboard/information_requests/1234",
+		ResultsURI:  "https://com/dashboard/information_requests/1234",
 		Reports:     []string{report1ID, report2ID},
 		Tags:        []string{"my-tag"},
 	}
@@ -370,13 +369,13 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 	}
 
 	// Expected Report 1
-	expectedReport1 := onfido.Report{
+	expectedReport1 := Report{
 		ID:        report1ID,
-		Name:      onfido.ReportNameDocument,
+		Name:      ReportNameDocument,
 		Status:    "complete",
-		Result:    onfido.ReportResultClear,
-		SubResult: onfido.ReportSubResultClear,
-		Variant:   onfido.ReportVariantStandard,
+		Result:    ReportResultClear,
+		SubResult: ReportSubResultClear,
+		Variant:   ReportVariantStandard,
 		Href:      "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
 	}
 	expectedReport1Json, err := json.Marshal(expectedReport1)
@@ -419,8 +418,8 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	_, err = client.GetCheckExpanded(context.Background(), applicantID, expected.ID)
 	if err == nil {
@@ -436,8 +435,8 @@ func TestResumeCheck_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	_, err := client.ResumeCheck(context.Background(), "")
 	if err == nil {
@@ -446,7 +445,7 @@ func TestResumeCheck_NonOKResponse(t *testing.T) {
 }
 
 func TestResumeCheck_CheckCreated(t *testing.T) {
-	expected := onfido.Check{
+	expected := Check{
 		ID:     "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Status: "in_progress",
 	}
@@ -469,8 +468,8 @@ func TestResumeCheck_CheckCreated(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	c, err := client.ResumeCheck(context.Background(), expected.ID)
 	if err != nil {
@@ -489,8 +488,8 @@ func TestListChecks_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	it := client.ListChecks("")
 	if it.Next(context.Background()) == true {
@@ -503,27 +502,27 @@ func TestListChecks_NonOKResponse(t *testing.T) {
 
 func TestListChecks_ChecksRetrieved(t *testing.T) {
 	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
-	expected := onfido.Check{
+	expected := Check{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        onfido.CheckTypeExpress,
+		Type:        CheckTypeExpress,
 		Status:      "complete",
-		Result:      onfido.CheckResultClear,
-		DownloadURI: "https://onfido.com/dashboard/pdf/1234",
-		FormURI:     "https://onfido.com/information/1234",
+		Result:      CheckResultClear,
+		DownloadURI: "https://com/dashboard/pdf/1234",
+		FormURI:     "https://com/information/1234",
 		RedirectURI: "https://somewhere.else",
-		ResultsURI:  "https://onfido.com/dashboard/information_requests/1234",
-		Reports: []*onfido.Report{
+		ResultsURI:  "https://com/dashboard/information_requests/1234",
+		Reports: []*Report{
 			{
 				ID:     "7410a943-8f00-43d8-98de-36a774196d86",
-				Name:   onfido.ReportNameDocument,
-				Result: onfido.ReportResultClear,
+				Name:   ReportNameDocument,
+				Result: ReportResultClear,
 			},
 		},
 		Tags: []string{"my-tag"},
 	}
-	expectedJSON, err := json.Marshal(onfido.Checks{
-		Checks: []*onfido.Check{&expected},
+	expectedJSON, err := json.Marshal(Checks{
+		Checks: []*Check{&expected},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -543,8 +542,8 @@ func TestListChecks_ChecksRetrieved(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	it := client.ListChecks(applicantID)
 	for it.Next(context.Background()) {

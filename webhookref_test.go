@@ -1,4 +1,4 @@
-package onfido_test
+package onfido
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	"github.com/uw-labs/go-onfido"
 )
 
 func TestCreateWebhook_NonOKResponse(t *testing.T) {
@@ -20,24 +19,24 @@ func TestCreateWebhook_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	_, err := client.CreateWebhook(context.Background(), onfido.WebhookRefRequest{})
+	_, err := client.CreateWebhook(context.Background(), WebhookRefRequest{})
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
 }
 
 func TestCreateWebhook_WebhookCreated(t *testing.T) {
-	expected := onfido.WebhookRef{
+	expected := WebhookRef{
 		ID:           "fcb73186-0733-4f6f-9c57-d9d5ef979443",
 		URL:          "https://webhookendpoint.url",
 		Enabled:      true,
 		Href:         "/v2/webhooks/fcb73186-0733-4f6f-9c57-d9d5ef979443",
 		Token:        "ExampleToken",
-		Environments: []onfido.WebhookEnvironment{onfido.WebhookEnvironmentSandbox, onfido.WebhookEnvironmentLive},
-		Events:       []onfido.WebhookEvent{onfido.WebhookEventCheckStarted, onfido.WebhookEventCheckCompleted},
+		Environments: []WebhookEnvironment{WebhookEnvironmentSandbox, WebhookEnvironmentLive},
+		Events:       []WebhookEvent{WebhookEventCheckStarted, WebhookEventCheckCompleted},
 	}
 	expectedJSON, err := json.Marshal(expected)
 	if err != nil {
@@ -54,14 +53,14 @@ func TestCreateWebhook_WebhookCreated(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
-	wh, err := client.CreateWebhook(context.Background(), onfido.WebhookRefRequest{
+	wh, err := client.CreateWebhook(context.Background(), WebhookRefRequest{
 		URL:          "https://webhookendpoint.url",
 		Enabled:      true,
-		Environments: []onfido.WebhookEnvironment{onfido.WebhookEnvironmentSandbox, onfido.WebhookEnvironmentLive},
-		Events:       []onfido.WebhookEvent{onfido.WebhookEventCheckStarted, onfido.WebhookEventCheckCompleted},
+		Environments: []WebhookEnvironment{WebhookEnvironmentSandbox, WebhookEnvironmentLive},
+		Events:       []WebhookEvent{WebhookEventCheckStarted, WebhookEventCheckCompleted},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -84,8 +83,8 @@ func TestListWebhooks_NonOKResponse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	it := client.ListWebhooks()
 	if it.Next(context.Background()) == true {
@@ -97,17 +96,17 @@ func TestListWebhooks_NonOKResponse(t *testing.T) {
 }
 
 func TestListWebhooks_WebhooksRetrieved(t *testing.T) {
-	expected := onfido.WebhookRef{
+	expected := WebhookRef{
 		ID:           "fcb73186-0733-4f6f-9c57-d9d5ef979443",
 		URL:          "https://webhookendpoint.url",
 		Enabled:      true,
 		Href:         "/v2/webhooks/fcb73186-0733-4f6f-9c57-d9d5ef979443",
 		Token:        "ExampleToken",
-		Environments: []onfido.WebhookEnvironment{onfido.WebhookEnvironmentSandbox, onfido.WebhookEnvironmentLive},
-		Events:       []onfido.WebhookEvent{onfido.WebhookEventCheckStarted, onfido.WebhookEventCheckCompleted},
+		Environments: []WebhookEnvironment{WebhookEnvironmentSandbox, WebhookEnvironmentLive},
+		Events:       []WebhookEvent{WebhookEventCheckStarted, WebhookEventCheckCompleted},
 	}
-	expectedJSON, err := json.Marshal(onfido.WebhookRefs{
-		WebhookRefs: []*onfido.WebhookRef{&expected},
+	expectedJSON, err := json.Marshal(WebhookRefs{
+		WebhookRefs: []*WebhookRef{&expected},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -121,8 +120,8 @@ func TestListWebhooks_WebhooksRetrieved(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	it := client.ListWebhooks()
 	for it.Next(context.Background()) {

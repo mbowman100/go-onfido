@@ -1,4 +1,4 @@
-package onfido_test
+package onfido
 
 import (
 	"context"
@@ -10,26 +10,25 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	"github.com/uw-labs/go-onfido"
 )
 
 func TestLivePhotos_List(t *testing.T) {
 	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
 	createdAt := time.Now()
 
-	expected := onfido.LivePhoto{
+	expected := LivePhoto{
 		ID:           "541d040b-89f8-444b-8921-16b1333bf1c7",
 		CreatedAt:    &createdAt,
 		Href:         "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		DownloadHref: "https://onfido.com/photo/pdf/1234",
+		DownloadHref: "https://com/photo/pdf/1234",
 		FileName:     "something.png",
 		FileSize:     1234,
 		FileType:     "image/png",
 	}
 	expectedJSON, err := json.Marshal(struct {
-		LivePhotos []*onfido.LivePhoto `json:"live_photos"`
+		LivePhotos []*LivePhoto `json:"live_photos"`
 	}{
-		LivePhotos: []*onfido.LivePhoto{&expected},
+		LivePhotos: []*LivePhoto{&expected},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -48,8 +47,8 @@ func TestLivePhotos_List(t *testing.T) {
 	srv := httptest.NewServer(m)
 	defer srv.Close()
 
-	client := onfido.NewClient("123")
-	client.Endpoint = srv.URL
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
 
 	it := client.ListLivePhotos(applicantID)
 	for it.Next(context.Background()) {
