@@ -8,11 +8,19 @@ import (
 
 // Supported report names, results, subresults, and variants
 const (
-	ReportNameIdentity         ReportName = "identity"
-	ReportNameDocument         ReportName = "document"
-	ReportNameFacialSimilarity ReportName = "facial_similarity"
-	ReportNameStreetLevel      ReportName = "street_level"
-	ReportNameProofOfAddress   ReportName = "proof_of_address"
+	ReportNameDocument                   ReportName = "document"
+	ReportNameDocumentWithAddress        ReportName = "document_with_address_information"
+	ReportNameDocumentWithDrivingLicense ReportName = "document_with_driving_licence_information"
+	ReportNameFacialSimilarityPhoto      ReportName = "facial_similarity_photo"
+	ReportNameFacialSimilarityVideo      ReportName = "facial_similarity_video"
+	ReportNameKnownFaces                 ReportName = "known_faces"
+	ReportNameIdentityEnhanced           ReportName = "identity_enhanced"
+	ReportNameWatchlistEnhanced          ReportName = "watchlist_enhanced"
+	ReportNameWatchlistStandard          ReportName = "watchlist_standard"
+	ReportNameWatchlistPepsOnly          ReportName = "watchlist_peps_only"
+	ReportNameWatchlistSanctionsOnly     ReportName = "watchlist_sanctions_only"
+	ReportNameProofOfAddress             ReportName = "proof_of_address"
+	ReportNameRightToWork                ReportName = "right_to_work"
 
 	ReportResultClear        ReportResult = "clear"
 	ReportResultConsider     ReportResult = "consider"
@@ -22,10 +30,6 @@ const (
 	ReportSubResultRejected  ReportSubResult = "rejected"
 	ReportSubResultSuspected ReportSubResult = "suspected"
 	ReportSubResultCaution   ReportSubResult = "caution"
-
-	ReportVariantStandard ReportVariant = "standard"
-	ReportVariantKYC      ReportVariant = "kyc"
-	ReportVariantVideo    ReportVariant = "video"
 )
 
 // ReportName represents a report type name
@@ -37,9 +41,6 @@ type ReportResult string
 // ReportSubResult represents a report sub result
 type ReportSubResult string
 
-// ReportVariant represents a report variant
-type ReportVariant string
-
 // Report represents a report from the Onfido API
 type Report struct {
 	ID         string                 `json:"id,omitempty"`
@@ -48,11 +49,12 @@ type Report struct {
 	Status     string                 `json:"status,omitempty"`
 	Result     ReportResult           `json:"result,omitempty"`
 	SubResult  ReportSubResult        `json:"sub_result,omitempty"`
-	Variant    ReportVariant          `json:"variant,omitempty"`
 	Href       string                 `json:"href,omitempty"`
 	Options    map[string]interface{} `json:"options,omitempty"`
 	Breakdown  Breakdowns             `json:"breakdown,omitempty"`
 	Properties Properties             `json:"properties,omitempty"`
+	Documents  []string               `json:"documents,omitempty"`
+	CheckID    string                 `json:"check_id,omitempty"`
 }
 
 // Reports represents a list of reports from the Onfido API
@@ -62,8 +64,8 @@ type Reports struct {
 
 // GetReport retrieves a report for the provided check by its ID.
 // see https://documentation.onfido.com/?shell#retrieve-report
-func (c *client) GetReport(ctx context.Context, checkID, id string) (*Report, error) {
-	req, err := c.newRequest("GET", "/checks/"+checkID+"/reports/"+id, nil)
+func (c *client) GetReport(ctx context.Context, id string) (*Report, error) {
+	req, err := c.newRequest("GET", "/reports/"+id, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +77,8 @@ func (c *client) GetReport(ctx context.Context, checkID, id string) (*Report, er
 
 // ResumeReport resumes a paused report by its ID.
 // see https://documentation.onfido.com/?shell#resume-report
-func (c *client) ResumeReport(ctx context.Context, checkID, id string) error {
-	req, err := c.newRequest("POST", "/checks/"+checkID+"/reports/"+id+"/resume", nil)
+func (c *client) ResumeReport(ctx context.Context, id string) error {
+	req, err := c.newRequest("POST", "/reports/"+id+"/resume", nil)
 	if err != nil {
 		return err
 	}
@@ -87,8 +89,8 @@ func (c *client) ResumeReport(ctx context.Context, checkID, id string) error {
 
 // CancelReport cancels a report by its ID.
 // see https://documentation.onfido.com/?shell#cancel-report
-func (c *client) CancelReport(ctx context.Context, checkID, id string) error {
-	req, err := c.newRequest("POST", "/checks/"+checkID+"/reports/"+id+"/cancel", nil)
+func (c *client) CancelReport(ctx context.Context, id string) error {
+	req, err := c.newRequest("POST", "/reports/"+id+"/cancel", nil)
 	if err != nil {
 		return err
 	}
@@ -125,7 +127,7 @@ func (c *client) ListReports(checkID string) *ReportIter {
 
 	return &ReportIter{&iter{
 		c:       c,
-		nextURL: "/checks/" + checkID + "/reports",
+		nextURL: "/reports?check_id=" + checkID,
 		handler: handler,
 	}}
 }

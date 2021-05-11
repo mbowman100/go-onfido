@@ -22,7 +22,7 @@ func TestCreateCheck_NonOKResponse(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	_, err := client.CreateCheck(context.Background(), "", CheckRequest{})
+	_, err := client.CreateCheck(context.Background(), CheckRequest{})
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
@@ -33,7 +33,6 @@ func TestCreateCheck_CheckCreated(t *testing.T) {
 	expected := Check{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        CheckTypeExpress,
 		Status:      "complete",
 		Result:      CheckResultClear,
 		DownloadURI: "https://com/dashboard/pdf/1234",
@@ -47,7 +46,8 @@ func TestCreateCheck_CheckCreated(t *testing.T) {
 				Result: ReportResultClear,
 			},
 		},
-		Tags: []string{"my-tag"},
+		Tags:        []string{"my-tag"},
+		ApplicantID: applicantID,
 	}
 	expectedJSON, err := json.Marshal(expected)
 	if err != nil {
@@ -55,11 +55,7 @@ func TestCreateCheck_CheckCreated(t *testing.T) {
 	}
 
 	m := mux.NewRouter()
-	m.HandleFunc("/applicants/{id}/checks", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		if vars["id"] != applicantID {
-			t.Fatal("expected applicant id was not in the request")
-		}
+	m.HandleFunc("/checks", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, wErr := w.Write(expectedJSON)
@@ -71,12 +67,12 @@ func TestCreateCheck_CheckCreated(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	c, err := client.CreateCheck(context.Background(), applicantID, CheckRequest{
-		Type:              expected.Type,
+	c, err := client.CreateCheck(context.Background(), CheckRequest{
 		RedirectURI:       expected.RedirectURI,
-		Reports:           expected.Reports,
+		ReportNames:       []string{string(ReportNameDocument)},
 		Tags:              expected.Tags,
 		SupressFormEmails: true,
+		ApplicantID:       expected.ApplicantID,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -104,7 +100,7 @@ func TestGetCheck_NonOKResponse(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	_, err := client.GetCheck(context.Background(), "", "")
+	_, err := client.GetCheck(context.Background(), "")
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
@@ -115,7 +111,6 @@ func TestGetCheck_CheckRetrieved(t *testing.T) {
 	expected := CheckRetrieved{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        CheckTypeExpress,
 		Status:      "complete",
 		Result:      CheckResultClear,
 		DownloadURI: "https://com/dashboard/pdf/1234",
@@ -124,6 +119,7 @@ func TestGetCheck_CheckRetrieved(t *testing.T) {
 		ResultsURI:  "https://com/dashboard/information_requests/1234",
 		Reports:     []string{"7410a943-8f00-43d8-98de-36a774196d86"},
 		Tags:        []string{"my-tag"},
+		ApplicantID: applicantID,
 	}
 	expectedJSON, err := json.Marshal(expected)
 	if err != nil {
@@ -131,9 +127,8 @@ func TestGetCheck_CheckRetrieved(t *testing.T) {
 	}
 
 	m := mux.NewRouter()
-	m.HandleFunc("/applicants/{applicantId}/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assert.Equal(t, applicantID, vars["applicantId"])
 		assert.Equal(t, expected.ID, vars["checkId"])
 
 		w.Header().Set("Content-Type", "application/json")
@@ -147,12 +142,13 @@ func TestGetCheck_CheckRetrieved(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	c, err := client.GetCheck(context.Background(), applicantID, expected.ID)
+	c, err := client.GetCheck(context.Background(), expected.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, expected.ID, c.ID)
+	assert.Equal(t, expected.ApplicantID, c.ApplicantID)
 	assert.Equal(t, expected.Href, c.Href)
 	assert.Equal(t, expected.Type, c.Type)
 	assert.Equal(t, expected.Status, c.Status)
@@ -168,8 +164,8 @@ func TestGetCheckExpanded_NoReports(t *testing.T) {
 	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
 	expected := CheckRetrieved{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
+		ApplicantID: applicantID,
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        CheckTypeExpress,
 		Status:      "complete",
 		Result:      CheckResultClear,
 		DownloadURI: "https://com/dashboard/pdf/1234",
@@ -185,9 +181,8 @@ func TestGetCheckExpanded_NoReports(t *testing.T) {
 	}
 
 	m := mux.NewRouter()
-	m.HandleFunc("/applicants/{applicantId}/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assert.Equal(t, applicantID, vars["applicantId"])
 		assert.Equal(t, expected.ID, vars["checkId"])
 
 		w.Header().Set("Content-Type", "application/json")
@@ -201,12 +196,13 @@ func TestGetCheckExpanded_NoReports(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	c, err := client.GetCheckExpanded(context.Background(), applicantID, expected.ID)
+	c, err := client.GetCheckExpanded(context.Background(), expected.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, expected.ID, c.ID)
+	assert.Equal(t, expected.ApplicantID, c.ApplicantID)
 	assert.Equal(t, expected.Href, c.Href)
 	assert.Equal(t, expected.Type, c.Type)
 	assert.Equal(t, expected.Status, c.Status)
@@ -229,7 +225,7 @@ func TestGetCheckExpanded_NonOkResponse(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	_, err := client.GetCheckExpanded(context.Background(), "", "")
+	_, err := client.GetCheckExpanded(context.Background(), "")
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
@@ -243,8 +239,8 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 
 	expected := CheckRetrieved{
 		ID:          checkID,
+		ApplicantID: applicantID,
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        CheckTypeExpress,
 		Status:      "complete",
 		Result:      CheckResultClear,
 		DownloadURI: "https://com/dashboard/pdf/1234",
@@ -266,8 +262,8 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 		Status:    "complete",
 		Result:    ReportResultClear,
 		SubResult: ReportSubResultClear,
-		Variant:   ReportVariantStandard,
 		Href:      "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
+		CheckID:   checkID,
 	}
 	expectedReport1Json, err := json.Marshal(expectedReport1)
 	if err != nil {
@@ -281,8 +277,8 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 		Status:    "complete",
 		Result:    ReportResultClear,
 		SubResult: ReportSubResultClear,
-		Variant:   ReportVariantStandard,
 		Href:      "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
+		CheckID:   checkID,
 	}
 	expectedReport2Json, err := json.Marshal(expectedReport2)
 	if err != nil {
@@ -291,9 +287,8 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 
 	m := mux.NewRouter()
 	// Return the requested Report
-	m.HandleFunc("/checks/{checkId}/reports/{reportId}", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/reports/{reportId}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assert.Equal(t, checkID, vars["checkId"])
 		assert.Contains(t, expected.Reports, vars["reportId"])
 
 		w.Header().Set("Content-Type", "application/json")
@@ -310,9 +305,8 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 	}).Methods("GET")
 
 	// Return the requested Check
-	m.HandleFunc("/applicants/{applicantId}/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assert.Equal(t, applicantID, vars["applicantId"])
 		assert.Equal(t, expected.ID, vars["checkId"])
 
 		w.Header().Set("Content-Type", "application/json")
@@ -326,7 +320,7 @@ func TestGetCheckExpanded_HasReports(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	c, err := client.GetCheckExpanded(context.Background(), applicantID, expected.ID)
+	c, err := client.GetCheckExpanded(context.Background(), expected.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -353,7 +347,6 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 	expected := CheckRetrieved{
 		ID:          checkID,
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        CheckTypeExpress,
 		Status:      "complete",
 		Result:      CheckResultClear,
 		DownloadURI: "https://com/dashboard/pdf/1234",
@@ -362,6 +355,7 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 		ResultsURI:  "https://com/dashboard/information_requests/1234",
 		Reports:     []string{report1ID, report2ID},
 		Tags:        []string{"my-tag"},
+		ApplicantID: applicantID,
 	}
 	expectedJSON, err := json.Marshal(expected)
 	if err != nil {
@@ -375,7 +369,6 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 		Status:    "complete",
 		Result:    ReportResultClear,
 		SubResult: ReportSubResultClear,
-		Variant:   ReportVariantStandard,
 		Href:      "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
 	}
 	expectedReport1Json, err := json.Marshal(expectedReport1)
@@ -405,9 +398,8 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 	}).Methods("GET")
 
 	// Return the requested Check
-	m.HandleFunc("/applicants/{applicantId}/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/checks/{checkId}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assert.Equal(t, applicantID, vars["applicantId"])
 		assert.Equal(t, expected.ID, vars["checkId"])
 
 		w.Header().Set("Content-Type", "application/json")
@@ -421,7 +413,7 @@ func TestGetCheckExpanded_HasReports_NonOkResponse(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	_, err = client.GetCheckExpanded(context.Background(), applicantID, expected.ID)
+	_, err = client.GetCheckExpanded(context.Background(), expected.ID)
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
@@ -505,7 +497,6 @@ func TestListChecks_ChecksRetrieved(t *testing.T) {
 	expected := Check{
 		ID:          "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:        "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
-		Type:        CheckTypeExpress,
 		Status:      "complete",
 		Result:      CheckResultClear,
 		DownloadURI: "https://com/dashboard/pdf/1234",
@@ -519,7 +510,8 @@ func TestListChecks_ChecksRetrieved(t *testing.T) {
 				Result: ReportResultClear,
 			},
 		},
-		Tags: []string{"my-tag"},
+		Tags:        []string{"my-tag"},
+		ApplicantID: applicantID,
 	}
 	expectedJSON, err := json.Marshal(Checks{
 		Checks: []*Check{&expected},
@@ -529,11 +521,7 @@ func TestListChecks_ChecksRetrieved(t *testing.T) {
 	}
 
 	m := mux.NewRouter()
-	m.HandleFunc("/applicants/{id}/checks", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		if vars["id"] != applicantID {
-			t.Fatal("expected applicant id was not in the request")
-		}
+	m.HandleFunc("/checks", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, wErr := w.Write(expectedJSON)
@@ -558,6 +546,7 @@ func TestListChecks_ChecksRetrieved(t *testing.T) {
 		assert.Equal(t, expected.FormURI, c.FormURI)
 		assert.Equal(t, expected.RedirectURI, c.RedirectURI)
 		assert.Equal(t, expected.ResultsURI, c.ResultsURI)
+		assert.Equal(t, expected.ApplicantID, c.ApplicantID)
 	}
 	if it.Err() != nil {
 		t.Fatal(it.Err())

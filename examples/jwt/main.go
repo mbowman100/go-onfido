@@ -22,16 +22,14 @@ func main() {
 		Email:     "rcrowe@example.co.uk",
 		FirstName: "Rob",
 		LastName:  "Crowe",
-		Addresses: []onfido.Address{
-			{
-				BuildingNumber: "18",
-				Street:         "Wind Corner",
-				Town:           "Crawley",
-				State:          "West Sussex",
-				Postcode:       "NW9 5AB",
-				Country:        "GBR",
-				StartDate:      "2018-02-10",
-			},
+		Address: onfido.Address{
+			BuildingNumber: "18",
+			Street:         "Wind Corner",
+			Town:           "Crawley",
+			State:          "West Sussex",
+			Postcode:       "NW9 5AB",
+			Country:        "GBR",
+			StartDate:      "2018-02-10",
 		},
 	})
 	if err != nil {

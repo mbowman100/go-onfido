@@ -17,7 +17,7 @@ const (
 	IDNumberTypeSocialInsurance IDNumberType = "social_insurance"
 	IDNumberTypeTaxID           IDNumberType = "tax_id"
 	IDNumberTypeIdentityCard    IDNumberType = "identity_card"
-	IDNumberTypeDrivingLicense  IDNumberType = "driving_license"
+	IDNumberTypeDrivingLicense  IDNumberType = "driving_licence"
 )
 
 // IDNumber represents an ID number from the Onfido API
@@ -34,26 +34,17 @@ type Applicants struct {
 
 // Applicant represents an applicant from the Onfido API
 type Applicant struct {
-	ID                string     `json:"id,omitempty"`
-	CreatedAt         *time.Time `json:"created_at,omitempty"`
-	Sandbox           bool       `json:"sandbox,omitempty"`
-	Title             string     `json:"title,omitempty"`
-	FirstName         string     `json:"first_name,omitempty"`
-	LastName          string     `json:"last_name,omitempty"`
-	MiddleName        string     `json:"middle_name,omitempty"`
-	Email             string     `json:"email,omitempty"`
-	Gender            string     `json:"gender,omitempty"`
-	DOB               string     `json:"dob,omitempty"`
-	Telephone         string     `json:"telephone,omitempty"`
-	Mobile            string     `json:"mobile,omitempty"`
-	Country           string     `json:"country,omitempty"`
-	MothersMaidenName string     `json:"mothers_maiden_name,omitempty"`
-	PreviousLastName  string     `json:"previous_last_name,omitempty"`
-	Nationality       string     `json:"nationality,omitempty"`
-	CountryOfBirth    string     `json:"country_of_birth,omitempty"`
-	TownOfBirth       string     `json:"town_of_birth,omitempty"`
-	IDNumbers         []IDNumber `json:"id_numbers,omitempty"`
-	Addresses         []Address  `json:"addresses,omitempty"`
+	ID         string     `json:"id,omitempty"`
+	CreatedAt  *time.Time `json:"created_at,omitempty"`
+	Sandbox    bool       `json:"sandbox,omitempty"`
+	Title      string     `json:"title,omitempty"`
+	FirstName  string     `json:"first_name,omitempty"`
+	LastName   string     `json:"last_name,omitempty"`
+	MiddleName string     `json:"middle_name,omitempty"`
+	Email      string     `json:"email,omitempty"`
+	DOB        string     `json:"dob,omitempty"`
+	IDNumbers  []IDNumber `json:"id_numbers,omitempty"`
+	Address    Address    `json:"address,omitempty"`
 }
 
 // CreateApplicant creates a new applicant.

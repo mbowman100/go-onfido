@@ -36,9 +36,10 @@ type DocumentSide string
 
 // DocumentRequest represents a document request to Onfido API
 type DocumentRequest struct {
-	File io.ReadSeeker
-	Type DocumentType
-	Side DocumentSide
+	ApplicantID string
+	File        io.ReadSeeker
+	Type        DocumentType
+	Side        DocumentSide
 }
 
 // Document represents a document in Onfido API
@@ -52,6 +53,7 @@ type Document struct {
 	FileSize     int          `json:"file_size,omitempty"`
 	Type         DocumentType `json:"type,omitempty"`
 	Side         DocumentSide `json:"side,omitempty"`
+	ApplicantID  string       `json:"applicant_id,omitempty"`
 }
 
 // Documents represents a list of documents from the Onfido API
@@ -93,7 +95,7 @@ func createFormFile(writer *multipart.Writer, fieldname string, file io.ReadSeek
 
 // UploadDocument uploads a document for the provided applicant.
 // see https://documentation.onfido.com/?shell#upload-document
-func (c *client) UploadDocument(ctx context.Context, applicantID string, dr DocumentRequest) (*Document, error) {
+func (c *client) UploadDocument(ctx context.Context, dr DocumentRequest) (*Document, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -110,11 +112,14 @@ func (c *client) UploadDocument(ctx context.Context, applicantID string, dr Docu
 	if err := writer.WriteField("side", string(dr.Side)); err != nil {
 		return nil, err
 	}
+	if err := writer.WriteField("applicant_id", dr.ApplicantID); err != nil {
+		return nil, err
+	}
 	if err := writer.Close(); err != nil {
 		return nil, err
 	}
 
-	req, err := c.newRequest("POST", "/applicants/"+applicantID+"/documents", body)
+	req, err := c.newRequest("POST", "/documents", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	if err != nil {
 		return nil, err
@@ -125,10 +130,10 @@ func (c *client) UploadDocument(ctx context.Context, applicantID string, dr Docu
 	return &resp, err
 }
 
-// GetDocument retrieves a single document for the provided applicant by its ID.
+// GetDocument retrieves a single document by its ID.
 // see https://documentation.onfido.com/?shell#retrieve-document
-func (c *client) GetDocument(ctx context.Context, applicantID, id string) (*Document, error) {
-	req, err := c.newRequest("GET", "/applicants/"+applicantID+"/documents/"+id, nil)
+func (c *client) GetDocument(ctx context.Context, id string) (*Document, error) {
+	req, err := c.newRequest("GET", "/documents/"+id, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +171,7 @@ func (c *client) ListDocuments(applicantID string) *DocumentIter {
 
 	return &DocumentIter{&iter{
 		c:       c,
-		nextURL: "/applicants/" + applicantID + "/documents",
+		nextURL: "/documents?applicant_id="+applicantID,
 		handler: handler,
 	}}
 }

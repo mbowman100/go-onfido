@@ -44,7 +44,7 @@ type WebhookRequest struct {
 		Object       struct {
 			ID          string `json:"id"`
 			Status      string `json:"status"`
-			CompletedAt string `json:"completed_at"`
+			CompletedAt string `json:"completed_at_iso8601"`
 			Href        string `json:"href"`
 		} `json:"object"`
 	} `json:"payload"`
