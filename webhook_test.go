@@ -45,7 +45,7 @@ func TestValidateSignature_InvalidSignature(t *testing.T) {
 
 func TestValidateSignature_ValidSignature(t *testing.T) {
 	wh := webhook{Token: "abc123"}
-	err := wh.ValidateSignature([]byte("hello world"), "fcc98c5b4f306cfe6b5b8fcce03ddb33fc13ae6b")
+	err := wh.ValidateSignature([]byte("hello world"), "8c301acf7e955038b486de8f2a35f7f28bb5755fd1f77e1dbf9ef9e27713ad0d")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestParseFromRequest_ValidSignature(t *testing.T) {
 	req := &http.Request{
 		Header: make(map[string][]string),
 	}
-	req.Header.Add(WebhookSignatureHeader, "d2ef30601350308c1f1c25c5fbf359badb95cbfb")
+	req.Header.Add(WebhookSignatureHeader, "b469eabb36776543320fc09ed03451c34706daa3a730a561868ab2cc4399f8ec")
 	req.Body = ioutil.NopCloser(bytes.NewBuffer([]byte("{\"msg\": \"hello world\"}")))
 
 	wh := webhook{Token: "abc123"}

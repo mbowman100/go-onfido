@@ -23,7 +23,8 @@ func main() {
 	}
 	defer doc.Close()
 
-	document, err := client.UploadDocument(ctx, applicantID, onfido.DocumentRequest{
+	document, err := client.UploadDocument(ctx, onfido.DocumentRequest{
+		ApplicantID: applicantID,
 		File: doc,
 		Type: onfido.DocumentTypeIDCard,
 		Side: onfido.DocumentSideFront,

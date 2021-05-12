@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -17,7 +18,7 @@ import (
 // Constants
 const (
 	ClientVersion   = "0.1.0"
-	DefaultEndpoint = "https://api.onfido.com/v2"
+	DefaultEndpoint = "https://api.eu.onfido.com/v3.1"
 	TokenEnv        = "ONFIDO_TOKEN"
 )
 
@@ -25,22 +26,22 @@ type OnfidoClient interface {
 	SetHTTPClient(client HTTPRequester)
 	NewSdkTokenWeb(ctx context.Context, applicantID, referrer string) (*SdkToken, error)
 	NewSdkTokenMobile(ctx context.Context, applicantID, applicationID string) (*SdkToken, error)
-	GetReport(ctx context.Context, checkID, id string) (*Report, error)
-	ResumeReport(ctx context.Context, checkID, id string) error
-	CancelReport(ctx context.Context, checkID, id string) error
+	GetReport(ctx context.Context, id string) (*Report, error)
+	ResumeReport(ctx context.Context, id string) error
+	CancelReport(ctx context.Context, id string) error
 	ListReports(checkID string) *ReportIter
-	GetDocument(ctx context.Context, applicantID, id string) (*Document, error)
+	GetDocument(ctx context.Context, id string) (*Document, error)
 	ListDocuments(applicantID string) *DocumentIter
-	UploadDocument(ctx context.Context, applicantID string, dr DocumentRequest) (*Document, error)
+	UploadDocument(ctx context.Context, dr DocumentRequest) (*Document, error)
 	ListLivePhotos(applicantID string) *LivePhotoIter
 	CreateApplicant(ctx context.Context, a Applicant) (*Applicant, error)
 	DeleteApplicant(ctx context.Context, id string) error
 	GetApplicant(ctx context.Context, id string) (*Applicant, error)
 	ListApplicants() *ApplicantIter
 	UpdateApplicant(ctx context.Context, a Applicant) (*Applicant, error)
-	CreateCheck(ctx context.Context, applicantID string, cr CheckRequest) (*Check, error)
-	GetCheck(ctx context.Context, applicantID, id string) (*CheckRetrieved, error)
-	GetCheckExpanded(ctx context.Context, applicantID, id string) (*Check, error)
+	CreateCheck(ctx context.Context, cr CheckRequest) (*Check, error)
+	GetCheck(ctx context.Context, id string) (*CheckRetrieved, error)
+	GetCheckExpanded(ctx context.Context, id string) (*Check, error)
 	ResumeCheck(ctx context.Context, id string) (*Check, error)
 	ListChecks(applicantID string) *CheckIter
 	CreateWebhook(ctx context.Context, wr WebhookRefRequest) (*WebhookRef, error)
@@ -138,11 +139,25 @@ func (c *client) newRequest(method, uri string, body io.Reader) (*http.Request, 
 		uri = c.endpoint + uri
 	}
 
+	// Add in query params if they are present
+	var q url.Values
+	splitUri := strings.Split(uri, "?")
+	if len(splitUri) == 2 {
+		uri = splitUri[0]
+
+		var err error
+		q, err = url.ParseQuery(splitUri[1])
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	req, err := http.NewRequest(method, uri, body)
 	if err != nil {
 		return nil, err
 	}
 
+	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Go-Onfido/"+ClientVersion)
 	req.Header.Set("Authorization", "Token token="+c.token.String())

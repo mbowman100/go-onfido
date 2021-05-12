@@ -24,12 +24,13 @@ func TestUploadDocument_NonOKResponse(t *testing.T) {
 	client.endpoint = srv.URL
 
 	docReq := DocumentRequest{
-		File: bytes.NewReader([]byte("test")),
-		Type: DocumentTypeIDCard,
-		Side: DocumentSideFront,
+		ApplicantID: "",
+		File:        bytes.NewReader([]byte("test")),
+		Type:        DocumentTypeIDCard,
+		Side:        DocumentSideFront,
 	}
 
-	_, err := client.UploadDocument(context.Background(), "", docReq)
+	_, err := client.UploadDocument(context.Background(), docReq)
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
@@ -46,6 +47,7 @@ func TestUploadDocument_DocumentUploaded(t *testing.T) {
 		FileSize:     282123,
 		Type:         DocumentTypePassport,
 		Side:         DocumentSideBack,
+		ApplicantID:  applicantID,
 	}
 	expectedJSON, err := json.Marshal(expected)
 	if err != nil {
@@ -53,10 +55,7 @@ func TestUploadDocument_DocumentUploaded(t *testing.T) {
 	}
 
 	m := mux.NewRouter()
-	m.HandleFunc("/applicants/{applicantId}/documents", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		assert.Equal(t, applicantID, vars["applicantId"])
-
+	m.HandleFunc("/documents", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, wErr := w.Write(expectedJSON)
@@ -68,10 +67,11 @@ func TestUploadDocument_DocumentUploaded(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	d, err := client.UploadDocument(context.Background(), applicantID, DocumentRequest{
-		File: bytes.NewReader([]byte("test")),
-		Type: expected.Type,
-		Side: expected.Side,
+	d, err := client.UploadDocument(context.Background(), DocumentRequest{
+		ApplicantID: applicantID,
+		File:        bytes.NewReader([]byte("test")),
+		Type:        expected.Type,
+		Side:        expected.Side,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -98,14 +98,13 @@ func TestGetDocument_NonOKResponse(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	_, err := client.GetDocument(context.Background(), "", "")
+	_, err := client.GetDocument(context.Background(), "")
 	if err == nil {
 		t.Fatal("expected server to return non ok response, got successful response")
 	}
 }
 
 func TestGetDocument_DocumentRetrieved(t *testing.T) {
-	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
 	expected := Document{
 		ID:           "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
 		Href:         "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
@@ -115,6 +114,7 @@ func TestGetDocument_DocumentRetrieved(t *testing.T) {
 		FileSize:     282123,
 		Type:         DocumentTypePassport,
 		Side:         DocumentSideBack,
+		ApplicantID:  "541d040b-89f8-444b-8921-16b1333bf1c6",
 	}
 	expectedJSON, err := json.Marshal(expected)
 	if err != nil {
@@ -122,9 +122,8 @@ func TestGetDocument_DocumentRetrieved(t *testing.T) {
 	}
 
 	m := mux.NewRouter()
-	m.HandleFunc("/applicants/{applicantId}/documents/{documentId}", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/documents/{documentId}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		assert.Equal(t, applicantID, vars["applicantId"])
 		assert.Equal(t, expected.ID, vars["documentId"])
 
 		w.Header().Set("Content-Type", "application/json")
@@ -138,12 +137,13 @@ func TestGetDocument_DocumentRetrieved(t *testing.T) {
 	client := NewClient("123").(*client)
 	client.endpoint = srv.URL
 
-	d, err := client.GetDocument(context.Background(), applicantID, expected.ID)
+	d, err := client.GetDocument(context.Background(), expected.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, expected.ID, d.ID)
+	assert.Equal(t, expected.ApplicantID, d.ApplicantID)
 	assert.Equal(t, expected.Href, d.Href)
 	assert.Equal(t, expected.DownloadHref, d.DownloadHref)
 	assert.Equal(t, expected.FileName, d.FileName)
@@ -177,6 +177,7 @@ func TestListDocuments_DocumentsRetrieved(t *testing.T) {
 	applicantID := "541d040b-89f8-444b-8921-16b1333bf1c6"
 	expected := Document{
 		ID:           "ce62d838-56f8-4ea5-98be-e7166d1dc33d",
+		ApplicantID:  applicantID,
 		Href:         "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86",
 		DownloadHref: "/v2/live_photos/7410A943-8F00-43D8-98DE-36A774196D86/download",
 		FileName:     "localfile.png",
@@ -193,10 +194,7 @@ func TestListDocuments_DocumentsRetrieved(t *testing.T) {
 	}
 
 	m := mux.NewRouter()
-	m.HandleFunc("/applicants/{applicantId}/documents", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		assert.Equal(t, applicantID, vars["applicantId"])
-
+	m.HandleFunc("/documents", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, wErr := w.Write(expectedJSON)
