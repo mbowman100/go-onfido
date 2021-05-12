@@ -41,10 +41,6 @@ type ReportResult string
 // ReportSubResult represents a report sub result
 type ReportSubResult string
 
-type ReportDocumentOverview struct {
-	ID string `json:"id,omitempty"`
-}
-
 // Report represents a report from the Onfido API
 type Report struct {
 	ID         string                    `json:"id,omitempty"`
@@ -58,7 +54,6 @@ type Report struct {
 	Breakdown  Breakdowns                `json:"breakdown,omitempty"`
 	Properties Properties                `json:"properties,omitempty"`
 	CheckID    string                    `json:"check_id,omitempty"`
-	Documents  []*ReportDocumentOverview `json:"documents,omitempty"`
 }
 
 // Reports represents a list of reports from the Onfido API
