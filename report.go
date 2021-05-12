@@ -54,6 +54,7 @@ type Report struct {
 	Breakdown  Breakdowns             `json:"breakdown,omitempty"`
 	Properties Properties             `json:"properties,omitempty"`
 	CheckID    string                 `json:"check_id,omitempty"`
+	Documents  map[string]interface{} `json:"documents,omitempty"`
 }
 
 // Reports represents a list of reports from the Onfido API
