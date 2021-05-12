@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,7 +19,7 @@ import (
 
 // Constants
 const (
-	ClientVersion   = "0.2.0"
+	ClientVersion   = "0.1.0"
 	DefaultEndpoint = "https://api.eu.onfido.com/v3.1"
 	TokenEnv        = "ONFIDO_TOKEN"
 )
@@ -186,6 +188,13 @@ func (c *client) do(ctx context.Context, req *http.Request, v interface{}) (*htt
 	if c := resp.StatusCode; c < 200 || c > 299 {
 		return nil, handleResponseErr(resp)
 	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read body: %w", err)
+	}
+
+	log.Println(string(body))
 
 	if v != nil {
 		if w, ok := v.(io.Writer); ok {
