@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -188,15 +186,6 @@ func (c *client) do(ctx context.Context, req *http.Request, v interface{}) (*htt
 	if c := resp.StatusCode; c < 200 || c > 299 {
 		return nil, handleResponseErr(resp)
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	log.Print(string(body))
-	resp.Body.Close()
-
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	if v != nil {
 		if w, ok := v.(io.Writer); ok {
