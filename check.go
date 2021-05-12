@@ -77,7 +77,7 @@ type CheckRetrieved struct {
 	FormURI               string      `json:"form_uri,omitempty"`
 	RedirectURI           string      `json:"redirect_uri,omitempty"`
 	ResultsURI            string      `json:"results_uri,omitempty"`
-	Reports               []string    `json:"report_ids,omitempty"`
+	Reports               []string    `json:"reports,omitempty"`
 	Tags                  []string    `json:"tags,omitempty"`
 	ApplicantID           string      `json:"applicant_id,omitempty"`
 	ApplicantProvidesData bool        `json:"applicant_provides_data"`
