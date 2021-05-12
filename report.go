@@ -53,7 +53,6 @@ type Report struct {
 	Options    map[string]interface{} `json:"options,omitempty"`
 	Breakdown  Breakdowns             `json:"breakdown,omitempty"`
 	Properties Properties             `json:"properties,omitempty"`
-	Documents  []string               `json:"documents,omitempty"`
 	CheckID    string                 `json:"check_id,omitempty"`
 }
 
