@@ -193,6 +193,8 @@ func (c *client) do(ctx context.Context, req *http.Request, v interface{}) (*htt
 	if err != nil {
 		return nil, fmt.Errorf("unable to read body: %w", err)
 	}
+	resp.Body.Close()
+	resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	log.Println(string(body))
 
