@@ -52,20 +52,24 @@ func (c *client) DownloadLiveVideo(ctx context.Context, id string) (*LiveVideoDo
 	}, err
 }
 
-// LiveVideoIter represents a LiveVideo iterator
-type LiveVideoIter struct {
+// liveVideoIter represents a LiveVideo iterator
+type liveVideoIter struct {
 	*iter
 }
 
-// LiveVideo returns the current item in the iterator as a LiveVideo.
-func (i *LiveVideoIter) LiveVideo() *LiveVideo {
+type LiveVideoIter interface {
+	Iter
+	LiveVideo() *LiveVideo
+}
+
+func (i *liveVideoIter) LiveVideo() *LiveVideo {
 	return i.Current().(*LiveVideo)
 }
 
 // LiveVideoIter retrieves the list of live videos for the provided applicant.
 // see https://documentation.onfido.com/#list-live-videos
-func (c *client) ListLiveVideos(applicantID string) *LiveVideoIter {
-	return &LiveVideoIter{&iter{
+func (c *client) ListLiveVideos(applicantID string) Iter {
+	return &liveVideoIter{&iter{
 		c:       c,
 		nextURL: "/live_videos?applicant_id=" + applicantID,
 		handler: func(body []byte) ([]interface{}, error) {

@@ -221,6 +221,12 @@ func handleResponseErr(resp *http.Response) error {
 	return &onfidoErr
 }
 
+type Iter interface {
+	Current() interface{}
+	Err() error
+	Next(ctx context.Context) bool
+}
+
 type iter struct {
 	c       *client
 	nextURL string
