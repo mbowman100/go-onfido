@@ -68,7 +68,7 @@ func (i *liveVideoIter) LiveVideo() *LiveVideo {
 
 // LiveVideoIter retrieves the list of live videos for the provided applicant.
 // see https://documentation.onfido.com/#list-live-videos
-func (c *client) ListLiveVideos(applicantID string) Iter {
+func (c *client) ListLiveVideos(applicantID string) LiveVideoIter {
 	return &liveVideoIter{&iter{
 		c:       c,
 		nextURL: "/live_videos?applicant_id=" + applicantID,
