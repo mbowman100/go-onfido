@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -49,4 +50,38 @@ func (c *client) DownloadLiveVideo(ctx context.Context, id string) (*LiveVideoDo
 	return &LiveVideoDownload{
 		Data: encodedBytes.String(),
 	}, err
+}
+
+// LiveVideoIter represents a LiveVideo iterator
+type LiveVideoIter struct {
+	*iter
+}
+
+// LiveVideo returns the current item in the iterator as a LiveVideo.
+func (i *LiveVideoIter) LiveVideo() *LiveVideo {
+	return i.Current().(*LiveVideo)
+}
+
+// LiveVideoIter retrieves the list of live videos for the provided applicant.
+// see https://documentation.onfido.com/#list-live-videos
+func (c *client) ListLiveVideos(applicantID string) *LiveVideoIter {
+	return &LiveVideoIter{&iter{
+		c:       c,
+		nextURL: "/live_videos?applicant_id=" + applicantID,
+		handler: func(body []byte) ([]interface{}, error) {
+			var r struct {
+				LiveVideos []*LiveVideo `json:"live_videos"`
+			}
+
+			if err := json.Unmarshal(body, &r); err != nil {
+				return nil, err
+			}
+
+			values := make([]interface{}, len(r.LiveVideos))
+			for i, v := range r.LiveVideos {
+				values[i] = v
+			}
+			return values, nil
+		},
+	}}
 }

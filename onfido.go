@@ -36,6 +36,7 @@ type OnfidoClient interface {
 	DownloadDocument(ctx context.Context, id string) (*DocumentDownload, error)
 	ListLivePhotos(applicantID string) *LivePhotoIter
 	DownloadLiveVideo(ctx context.Context, id string) (*LiveVideoDownload, error)
+	ListLiveVideos(applicantID string) *LiveVideoIter
 	CreateApplicant(ctx context.Context, a Applicant) (*Applicant, error)
 	DeleteApplicant(ctx context.Context, id string) error
 	GetApplicant(ctx context.Context, id string) (*Applicant, error)
