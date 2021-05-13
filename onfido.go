@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -33,7 +34,9 @@ type OnfidoClient interface {
 	GetDocument(ctx context.Context, id string) (*Document, error)
 	ListDocuments(applicantID string) *DocumentIter
 	UploadDocument(ctx context.Context, dr DocumentRequest) (*Document, error)
+	DownloadDocument(ctx context.Context, id string) (*Document, error)
 	ListLivePhotos(applicantID string) *LivePhotoIter
+	DownloadLiveVideo(ctx context.Context, id string) (*LiveVideo, error)
 	CreateApplicant(ctx context.Context, a Applicant) (*Applicant, error)
 	DeleteApplicant(ctx context.Context, id string) error
 	GetApplicant(ctx context.Context, id string) (*Applicant, error)
@@ -186,6 +189,14 @@ func (c *client) do(ctx context.Context, req *http.Request, v interface{}) (*htt
 	if c := resp.StatusCode; c < 200 || c > 299 {
 		return nil, handleResponseErr(resp)
 	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	resp.Body.Close()
+
+	resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
 	if v != nil {
 		if w, ok := v.(io.Writer); ok {

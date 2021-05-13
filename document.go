@@ -143,6 +143,19 @@ func (c *client) GetDocument(ctx context.Context, id string) (*Document, error) 
 	return &resp, err
 }
 
+// DownloadDocument returns the binary data representing the document image
+// see https://documentation.onfido.com/#download-document
+func (c *client) DownloadDocument(ctx context.Context, id string) (*Document, error) {
+	req, err := c.newRequest("GET", "/documents/"+id+"/download", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp Document
+	_, err = c.do(ctx, req, &resp)
+	return &resp, err
+}
+
 // DocumentIter represents a document iterator
 type DocumentIter struct {
 	*iter
