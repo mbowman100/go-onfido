@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"time"
 )
 
@@ -130,8 +129,6 @@ func (c *client) GetCheckExpanded(ctx context.Context, id string) (*Check, error
 	if err != nil {
 		return nil, err
 	}
-
-	log.Println(chkRetrieved)
 
 	// Build a regular Check object, this is what will be returned assuming there is no error.
 	check := Check{
