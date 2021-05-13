@@ -41,19 +41,23 @@ type ReportResult string
 // ReportSubResult represents a report sub result
 type ReportSubResult string
 
+// DocumentProcessed contains metadata about the document that has been processed
+type DocumentProcessed map[string]interface{}
+
 // Report represents a report from the Onfido API
 type Report struct {
-	ID         string                    `json:"id,omitempty"`
-	Name       ReportName                `json:"name,omitempty"`
-	CreatedAt  *time.Time                `json:"created_at,omitempty"`
-	Status     string                    `json:"status,omitempty"`
-	Result     ReportResult              `json:"result,omitempty"`
-	SubResult  ReportSubResult           `json:"sub_result,omitempty"`
-	Href       string                    `json:"href,omitempty"`
-	Options    map[string]interface{}    `json:"options,omitempty"`
-	Breakdown  Breakdowns                `json:"breakdown,omitempty"`
-	Properties Properties                `json:"properties,omitempty"`
-	CheckID    string                    `json:"check_id,omitempty"`
+	ID         string                 `json:"id,omitempty"`
+	Name       ReportName             `json:"name,omitempty"`
+	CreatedAt  *time.Time             `json:"created_at,omitempty"`
+	Status     string                 `json:"status,omitempty"`
+	Result     ReportResult           `json:"result,omitempty"`
+	SubResult  ReportSubResult        `json:"sub_result,omitempty"`
+	Href       string                 `json:"href,omitempty"`
+	Options    map[string]interface{} `json:"options,omitempty"`
+	Breakdown  Breakdowns             `json:"breakdown,omitempty"`
+	Properties Properties             `json:"properties,omitempty"`
+	CheckID    string                 `json:"check_id,omitempty"`
+	Documents  []DocumentProcessed    `json:"documents,omitempty"`
 }
 
 // Reports represents a list of reports from the Onfido API

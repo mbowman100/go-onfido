@@ -1,7 +1,10 @@
 package onfido
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -18,16 +21,32 @@ type LiveVideo struct {
 	FileSize     int        `json:"file_size,omitempty"`
 }
 
+type LiveVideoDownload struct {
+	// Data is the binary data of the video encoded as a Base64 string
+	Data string
+}
+
 // DownloadLiveVideo returns the binary data representing the video.
 // see https://documentation.onfido.com/#download-live-video
-func (c *client) DownloadLiveVideo(ctx context.Context, id string) (*LiveVideo, error) {
+func (c *client) DownloadLiveVideo(ctx context.Context, id string) (*LiveVideoDownload, error) {
 	req, err := c.newRequest(http.MethodGet, "/live_videos/"+id+"/download", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var resp *LiveVideo
-	_, err = c.do(ctx, req, resp)
+	var resp bytes.Buffer
+	_, err = c.do(ctx, req, &resp)
 
-	return resp, err
+	var encodedBytes bytes.Buffer
+	encoder := base64.NewEncoder(base64.StdEncoding, &encodedBytes)
+	defer encoder.Close()
+
+	_, err = encoder.Write(resp.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to write to encoded byte stream: %w", err)
+	}
+
+	return &LiveVideoDownload{
+		Data: encodedBytes.String(),
+	}, err
 }

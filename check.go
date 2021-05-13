@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 )
 
@@ -77,7 +78,7 @@ type CheckRetrieved struct {
 	FormURI               string      `json:"form_uri,omitempty"`
 	RedirectURI           string      `json:"redirect_uri,omitempty"`
 	ResultsURI            string      `json:"results_uri,omitempty"`
-	Reports               []string    `json:"reports,omitempty"`
+	Reports               []string    `json:"report_ids,omitempty"`
 	Tags                  []string    `json:"tags,omitempty"`
 	ApplicantID           string      `json:"applicant_id,omitempty"`
 	ApplicantProvidesData bool        `json:"applicant_provides_data"`
@@ -129,6 +130,8 @@ func (c *client) GetCheckExpanded(ctx context.Context, id string) (*Check, error
 	if err != nil {
 		return nil, err
 	}
+
+	log.Println(chkRetrieved)
 
 	// Build a regular Check object, this is what will be returned assuming there is no error.
 	check := Check{
