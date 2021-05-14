@@ -33,7 +33,10 @@ type OnfidoClient interface {
 	GetDocument(ctx context.Context, id string) (*Document, error)
 	ListDocuments(applicantID string) *DocumentIter
 	UploadDocument(ctx context.Context, dr DocumentRequest) (*Document, error)
+	DownloadDocument(ctx context.Context, id string) (*DocumentDownload, error)
 	ListLivePhotos(applicantID string) *LivePhotoIter
+	DownloadLiveVideo(ctx context.Context, id string) (*LiveVideoDownload, error)
+	ListLiveVideos(applicantID string) LiveVideoIter
 	CreateApplicant(ctx context.Context, a Applicant) (*Applicant, error)
 	DeleteApplicant(ctx context.Context, id string) error
 	GetApplicant(ctx context.Context, id string) (*Applicant, error)
@@ -216,6 +219,12 @@ func handleResponseErr(resp *http.Response) error {
 	}
 	onfidoErr.Resp = resp
 	return &onfidoErr
+}
+
+type Iter interface {
+	Current() interface{}
+	Err() error
+	Next(ctx context.Context) bool
 }
 
 type iter struct {

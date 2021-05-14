@@ -3,6 +3,7 @@ package onfido
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -54,6 +55,11 @@ type Document struct {
 	Type         DocumentType `json:"type,omitempty"`
 	Side         DocumentSide `json:"side,omitempty"`
 	ApplicantID  string       `json:"applicant_id,omitempty"`
+}
+
+type DocumentDownload struct {
+	// Data is the binary data of the video encoded as a Base64 string
+	Data string
 }
 
 // Documents represents a list of documents from the Onfido API
@@ -143,6 +149,31 @@ func (c *client) GetDocument(ctx context.Context, id string) (*Document, error) 
 	return &resp, err
 }
 
+// DownloadDocument returns the binary data representing the document image
+// see https://documentation.onfido.com/#download-document
+func (c *client) DownloadDocument(ctx context.Context, id string) (*DocumentDownload, error) {
+	req, err := c.newRequest("GET", "/documents/"+id+"/download", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp bytes.Buffer
+	_, err = c.do(ctx, req, &resp)
+
+	var encodedBytes bytes.Buffer
+	encoder := base64.NewEncoder(base64.StdEncoding, &encodedBytes)
+	defer encoder.Close()
+
+	_, err = encoder.Write(resp.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to write to encoded byte stream: %w", err)
+	}
+
+	return &DocumentDownload{
+		Data: encodedBytes.String(),
+	}, err
+}
+
 // DocumentIter represents a document iterator
 type DocumentIter struct {
 	*iter
@@ -171,7 +202,7 @@ func (c *client) ListDocuments(applicantID string) *DocumentIter {
 
 	return &DocumentIter{&iter{
 		c:       c,
-		nextURL: "/documents?applicant_id="+applicantID,
+		nextURL: "/documents?applicant_id=" + applicantID,
 		handler: handler,
 	}}
 }

@@ -223,3 +223,29 @@ func TestListDocuments_DocumentsRetrieved(t *testing.T) {
 		t.Fatal(it.Err())
 	}
 }
+
+func TestDownloadDocument(t *testing.T) {
+	mockDocumentID := "93672a37-8223-48b9-a440-3b5cb52a8e4b"
+	m := mux.NewRouter()
+	m.HandleFunc("/documents/{documentId}/download", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		assert.Equal(t, mockDocumentID, vars["documentId"])
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, wErr := w.Write([]byte("this is an image"))
+		assert.NoError(t, wErr)
+	}).Methods("GET")
+	srv := httptest.NewServer(m)
+	defer srv.Close()
+
+	client := NewClient("123").(*client)
+	client.endpoint = srv.URL
+
+	documentDownload, err := client.DownloadDocument(context.Background(), mockDocumentID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "dGhpcyBpcyBhbiBpbWFn", documentDownload.Data)
+}
