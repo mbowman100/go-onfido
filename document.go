@@ -3,7 +3,6 @@ package onfido
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -58,8 +57,8 @@ type Document struct {
 }
 
 type DocumentDownload struct {
-	// Data is the binary data of the video encoded as a Base64 string
-	Data string
+	// Data is the binary data of the document
+	Data []byte
 }
 
 // Documents represents a list of documents from the Onfido API
@@ -159,18 +158,12 @@ func (c *client) DownloadDocument(ctx context.Context, id string) (*DocumentDown
 
 	var resp bytes.Buffer
 	_, err = c.do(ctx, req, &resp)
-
-	var encodedBytes bytes.Buffer
-	encoder := base64.NewEncoder(base64.StdEncoding, &encodedBytes)
-	defer encoder.Close()
-
-	_, err = encoder.Write(resp.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to write to encoded byte stream: %w", err)
+		return nil, fmt.Errorf("failed to download document: %w", err)
 	}
 
 	return &DocumentDownload{
-		Data: encodedBytes.String(),
+		Data: resp.Bytes(),
 	}, err
 }
 

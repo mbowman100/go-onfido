@@ -34,7 +34,7 @@ func TestDownloadLiveVideo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, "dGhpcyBpcyBhIHZpZGVv", videoDownload.Data)
+	assert.Equal(t, []byte("this is a video"), videoDownload.Data)
 }
 
 func TestListLiveVideos(t *testing.T) {
