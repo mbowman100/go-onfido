@@ -247,5 +247,5 @@ func TestDownloadDocument(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, "dGhpcyBpcyBhbiBpbWFn", documentDownload.Data)
+	assert.Equal(t, []byte("this is an image"), documentDownload.Data)
 }
