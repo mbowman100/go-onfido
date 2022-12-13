@@ -44,7 +44,7 @@ type Applicant struct {
 	Email      string     `json:"email,omitempty"`
 	DOB        string     `json:"dob,omitempty"`
 	IDNumbers  []IDNumber `json:"id_numbers,omitempty"`
-	Address    Address    `json:"address,omitempty"`
+	// Address    Address    `json:"address,omitempty"`
 }
 
 // CreateApplicant creates a new applicant.
