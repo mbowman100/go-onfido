@@ -1,4 +1,4 @@
-module github.com/esqimo/go-onfido
+module github.com/mbowman100/go-onfido
 
 go 1.14
 

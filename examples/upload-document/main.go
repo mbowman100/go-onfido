@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/esqimo/go-onfido"
+	"github.com/mbowman100/go-onfido"
 )
 
 func main() {
@@ -25,9 +25,9 @@ func main() {
 
 	document, err := client.UploadDocument(ctx, onfido.DocumentRequest{
 		ApplicantID: applicantID,
-		File: doc,
-		Type: onfido.DocumentTypeIDCard,
-		Side: onfido.DocumentSideFront,
+		File:        doc,
+		Type:        onfido.DocumentTypeIDCard,
+		Side:        onfido.DocumentSideFront,
 	})
 	if err != nil {
 		panic(err)

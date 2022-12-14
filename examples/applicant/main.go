@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/esqimo/go-onfido"
+	"github.com/mbowman100/go-onfido"
 )
 
 func main() {

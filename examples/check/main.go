@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/esqimo/go-onfido"
+	"github.com/mbowman100/go-onfido"
 )
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 	}
 
 	check, err := client.CreateCheck(ctx, onfido.CheckRequest{
-		ApplicantID: applicant.ID,
+		ApplicantID:           applicant.ID,
 		ApplicantProvidesData: true,
 		ReportNames: []string{
 			string(onfido.ReportNameDocument),

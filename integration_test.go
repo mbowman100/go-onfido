@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package onfido_test
@@ -11,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/esqimo/go-onfido"
+	"github.com/mbowman100/go-onfido"
 )
 
 var (
